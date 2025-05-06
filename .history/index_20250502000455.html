@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rosefulfilment — Слайдер</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Swiper CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow-x: hidden;
+      background: linear-gradient(to bottom, #000 0%, #4d4d4d 100%);
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      scroll-behavior: smooth;
+      overscroll-behavior-x: none;
+    }
+    /* Фиксированная шапка */
+    header {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      background: #1e1e1e;
+      z-index: 100;
+      padding-top: 1cm !important;
+      padding-bottom: 1cm !important;
+    }
+    /* Отступ под шапкой: чуть меньше */
+    .spacer { height: 3rem; }
+
+    /* Слайдер */
+    .swiper {
+      position: relative;
+      width: 100%; max-width: 1200px;
+      height: calc(60vh + 150px);
+      margin: 0 auto;
+      overflow: visible;
+      touch-action: pan-y;
+    }
+    .swiper-wrapper,
+    .swiper-slide {
+      background: transparent !important;
+      overflow: visible !important;
+    }
+    .slide-img {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      max-width: 100%; max-height: 100%;
+      pointer-events: none;
+      z-index: 5;
+    }
+    /* Tagline: чуть ниже шапки */
+        .tagline {
+      position: absolute;
+      top: 1cm; /* спускаем блок ниже, чтобы шапка не перекрывала */
+      left: 0;
+      width: 100%; max-width: 1200px;
+      padding: 2.5rem 2rem;
+      background: linear-gradient(to bottom, rgba(30,30,30,1) 0%, rgba(30,30,30,0.85) 100%);
+      border-radius: 0 0 1rem 1rem;
+      box-sizing: border-box;
+      z-index: 10;
+    }
+    .tagline h1 {
+      margin: 0;
+      font-size: 4rem;
+      font-weight: 900;
+      line-height: 1.1;
+    }
+    .tagline h2 {
+      margin: .5rem 0 0;
+      font-size: 3.9375rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.4);
+      line-height: 1.2;
+    }
+    /* Стрелки */
+    .custom-nav-button {
+      width: 50px; height: 50px;
+      background: rgba(30,30,30,0.5);
+      border: 2px solid #ff5c00;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: #ff5c00; font-size: 24px;
+      cursor: pointer;
+      position: absolute; bottom: 2rem;
+      transition: background .3s;
+      z-index: 20;
+    }
+    .nav-prev { left: 2rem; }
+    .nav-next { right: 2rem; }
+    .custom-nav-button:hover {
+      background: rgba(30,30,30,0.8);
+    }
+    .divider {
+      border: none;
+      border-top: 1px solid #444;
+      margin: 1rem auto;
+      width: 100%; max-width: 1200px;
+    }
+    /* Буллеты */
+    .bullet {
+      width: 14px; height: 14px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: background .3s, opacity .3s;
+      background: #ccc;
+      opacity: 0.4;
+    }
+    /* ====== Override красивого перехода ====== */
+    /* Переход-полосы: тройной слой тонких штрихов, переход в серый */
+    /* Полосатый переход как штрих-код: 1px, 1.5px, 2px */
+    /* Полосатый переход: серые полоски на тёмном фоне */
+    /* Полосатый переход как штрих-код */
+    /* Переход штрих-кода: полоски растут от 1px до 4px */
+    /* Переход штрих-кода: 10 полос, от 1px до 10px */
+    .transition-divider {
+      width: 100%;
+      height: 80px; /* подберите высоту */
+      background: linear-gradient(to bottom,
+        /* 1px */
+        #4d4d4d 0px,#4d4d4d 1px,
+        transparent 1px,transparent 4px,
+        /* 2px */
+        #4d4d4d 4px,#4d4d4d 6px,
+        transparent 6px,transparent 9px,
+        /* 3px */
+        #4d4d4d 9px,#4d4d4d 12px,
+        transparent 12px,transparent 15px,
+        /* 4px */
+        #4d4d4d 15px,#4d4d4d 19px,
+        transparent 19px,transparent 22px,
+        /* 5px */
+        #4d4d4d 22px,#4d4d4d 27px,
+        transparent 27px,transparent 30px,
+        /* 6px */
+        #4d4d4d 30px,#4d4d4d 36px,
+        transparent 36px,transparent 39px,
+        /* 7px */
+        #4d4d4d 39px,#4d4d4d 46px,
+        transparent 46px,transparent 49px,
+        /* 8px */
+        #4d4d4d 49px,#4d4d4d 57px,
+        transparent 57px,transparent 60px,
+        /* 9px */
+        #4d4d4d 60px,#4d4d4d 69px,
+        transparent 69px,transparent 72px,
+        /* 10px */
+        #4d4d4d 72px,#4d4d4d 80px
+      );
+    }
+    .transition-divider::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      /* ручной штрих-код: 1px, 1.5px, 2px, 2.5px, 3px */
+      background: linear-gradient(to bottom,
+        rgba(255,255,255,0.2) 0px, rgba(255,255,255,0.2) 1px,
+        transparent 1px, transparent 14px,
+        rgba(255,255,255,0.2) 14px, rgba(255,255,255,0.2) 15.5px,
+        transparent 15.5px, transparent 29px,
+        rgba(255,255,255,0.2) 29px, rgba(255,255,255,0.2) 32px,
+        transparent 32px, transparent 45px,
+        rgba(255,255,255,0.2) 45px, rgba(255,255,255,0.2) 48.5px,
+        transparent 48.5px, transparent 62px,
+        rgba(255,255,255,0.2) 62px, rgba(255,255,255,0.2) 65px,
+        transparent 65px, transparent 80px
+      );
+      background-repeat: no-repeat;
+      background-size: 100% 100%;
+      pointer-events: none;
+    }
+    @media (max-width: 640px) {
+      /* Restore increased header height on mobile */
+      header {
+        padding-top: 2cm !important;
+        padding-bottom: 2cm !important;
+      }
+      html {
+        width: 200%;
+        height: 200%;
+        transform: scale(0.5);
+        transform-origin: top left;
+      }
+      .tagline {
+        position: absolute;
+        top: 1cm;
+        left: 50%;
+        width: 100%;
+        max-width: none;
+        transform: translateX(-50%) scale(0.75);
+        transform-origin: top center;
+        opacity: 0.5;
+      }
+      .tagline h1,
+      .tagline h2 {
+        white-space: nowrap;
+        text-align: center;
+      }
+      .slider-footer {
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center;
+      }
+      #paginationList {
+        display: flex !important;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+      }
+      #footerCounter {
+        text-align: center;
+        line-height: 1;
+      }
+      #sliderControls {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .bullet {
+        width: 1em !important;
+        height: 1em !important;
+      }
+      /* Shift content down to account for increased mobile header */
+      .spacer {
+        height: calc(3rem + 1cm) !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Шапка -->
+  <header class="px-6 py-4">
+    <div class="max-w-[1200px] mx-auto relative flex justify-between items-center">
+      <div class="absolute left-1/2 transform -translate-x-1/2 flex items-center space-x-2">
+        <div class="text-5xl font-black uppercase tracking-wider">Rosefulfilment</div>
+        <button id="burgerButton" class="md:hidden flex bg-[#1e1e1e] items-center p-3">
+          <span class="sr-only">Открыть меню</span>
+          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+               xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4"
+                  d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+        </button>
+      </div>
+      <nav id="navMenu" class="hidden md:flex items-center space-x-6">
+        <a href="#order" class="text-gray-300 uppercase text-sm hover:text-orange-500 transition">Заказ</a>
+        <a href="#delivery" class="text-gray-300 uppercase text-sm hover:text-orange-500 transition">Доставка</a>
+        <a href="#sorting" class="text-gray-300 uppercase text-sm hover:text-orange-500 transition">Сортировка</a>
+        <a href="#consolidation" class="text-gray-300 uppercase text-sm hover:text-orange-500 transition">Консолидация</a>
+        <a href="#shipping" class="text-gray-300 uppercase text-sm hover:text-orange-500 transition">Отправка</a>
+        <a href="#contact" class="ml-4 bg-orange-500 text-black px-4 py-2 rounded-md uppercase text-sm font-bold hover:bg-orange-600 transition">Связаться</a>
+      </nav>
+      <!-- Mobile dropdown menu -->
+      <div id="mobileMenuDropdown" class="hidden md:hidden absolute top-full right-0 mt-2 w-full bg-black bg-opacity-90 flex flex-col items-start space-y-4 p-4 z-50">
+        <a href="#order" class="text-white uppercase text-2xl hover:text-orange-500 transition">Заказ</a>
+        <a href="#delivery" class="text-white uppercase text-2xl hover:text-orange-500 transition">Доставка</a>
+        <a href="#sorting" class="text-white uppercase text-2xl hover:text-orange-500 transition">Сортировка</a>
+        <a href="#consolidation" class="text-white uppercase text-2xl hover:text-orange-500 transition">Консолидация</a>
+        <a href="#shipping" class="text-white uppercase text-2xl hover:text-orange-500 transition">Отправка</a>
+        <a href="#contact" class="bg-orange-500 text-black px-8 py-4 rounded-md uppercase text-2xl font-bold hover:bg-orange-600 transition">Связаться</a>
+      </div>
+      <script>
+        document.getElementById('burgerButton').addEventListener('click', function() {
+          document.getElementById('mobileMenuDropdown').classList.toggle('hidden');
+        });
+      </script>
+    </div>
+  </header>
+  <div class="spacer"></div>
+
+  <!-- Слайдер -->
+  <div class="swiper">
+    <div class="swiper-wrapper">
+      <div class="swiper-slide"><img src="1.png" class="slide-img" alt="Заказ"/></div>
+      <div class="swiper-slide"><img src="2.png"    class="slide-img" alt="Доставка"/></div>
+      <div class="swiper-slide"><img src="3.png" class="slide-img" alt="Сортировка"/></div>
+      <div class="swiper-slide"><img src="4.png" class="slide-img" alt="Консолидация"/></div>
+      <div class="swiper-slide"><img src="5.png" class="slide-img" alt="Отправка"/></div>
+      <div class="swiper-slide"><img src="6.png" class="slide-img" alt="Связаться"/></div>
+    </div>
+
+    <!-- Tagline -->
+    <div class="tagline">
+      <h1>НАДЁЖНЫЙ ПАРТНЁР</h1>
+      <h2>ДЛЯ БИЗНЕСА</h2>
+    </div>
+
+    <!-- Стрелки -->
+    <div class="nav-prev custom-nav-button">❮</div>
+    <div class="nav-next custom-nav-button">❯</div>
+  </div>
+
+  <!-- Буллеты и счётчик -->
+  <div id="sliderControls" class="flex justify-center items-center flex-wrap gap-3 py-4">
+    <div id="paginationList" class="flex gap-2"></div>
+    <div id="footerCounter" class="text-base font-medium flex items-center gap-1">
+      <span id="currentIndex" class="text-orange-500"></span>
+      <span class="text-white">из</span>
+      <span id="totalSlides" class="text-white"></span>
+    </div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- Под слайдером -->
+  <section class="slider-footer max-w-[1200px] mx-auto px-6 py-8 flex justify-between items-start">
+    <div class="flex flex-col items-start gap-3">
+      <div id="sliderTitle" class="text-3xl font-bold uppercase text-white"></div>
+      <div id="serviceDescription" class="text-lg text-gray-400"></div>
+      <a id="serviceLink"
+         class="mt-4 inline-block border-2 border-orange-500 text-white px-6 py-3 rounded-md uppercase text-base font-semibold transition hover:bg-orange-500"
+         href="#"
+         aria-label="Подробнее об услуге">
+        Подробнее →
+      </a>
+    </div>
+  </section>
+
+  <!-- Swiper JS -->
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+  <script>
+    const swiper = new Swiper('.swiper', {
+      loop: true,
+      slidesPerView: 1,
+      spaceBetween: 10,
+      autoplay: { delay: 6000, disableOnInteraction: false },
+      navigation: { prevEl: '.nav-prev', nextEl: '.nav-next' }
+    });
+
+    const titles = ['Заказ','Доставка','Сортировка','Консолидация','Отправка','Связаться'];
+    const descriptions = [
+      'Описание «Заказ»: мы помогаем оформить ваш заказ быстро и удобно.',
+      'Описание «Доставка»: оперативная доставка по всей России в короткие сроки.',
+      'Описание «Сортировка»: аккуратная сортировка и подготовка к отправке.',
+      'Описание «Консолидация»: объединяем мелкие грузы в один для экономии.',
+      'Описание «Отправка»: безопасная отправка любым видом транспорта.',
+      'Описание «Связаться»: мы на связи 24/7 и ответим на все вопросы.'
+    ];
+    const links = ['#order','#delivery','#sorting','#consolidation','#shipping','#contact'];
+
+    const sliderTitle        = document.getElementById('sliderTitle');
+    const serviceDescription = document.getElementById('serviceDescription');
+    const serviceLink        = document.getElementById('serviceLink');
+    const paginationList     = document.getElementById('paginationList');
+    const currentIndex       = document.getElementById('currentIndex');
+    const totalSlides        = document.getElementById('totalSlides');
+
+    // Инициализируем буллеты
+    titles.forEach((_, idx) => {
+      const bullet = document.createElement('div');
+      bullet.className = 'bullet';
+      bullet.addEventListener('click', () => swiper.slideToLoop(idx));
+      paginationList.append(bullet);
+    });
+
+    const bullets = document.querySelectorAll('.bullet');
+    const total   = bullets.length;
+    totalSlides.textContent = total;
+
+    function updateFooter() {
+      const idx = swiper.realIndex;
+      sliderTitle.textContent        = titles[idx];
+      serviceDescription.textContent = descriptions[idx];
+      serviceLink.href               = links[idx];
+      currentIndex.textContent       = idx + 1;
+
+      bullets.forEach((b, i) => {
+        const dist = Math.abs(i - idx), max = total - 1;
+        if (i === idx) {
+          b.style.background = '#ff5c00';
+          b.style.opacity    = '1';
+        } else {
+          b.style.background = '#ccc';
+          b.style.opacity    = (1 - (dist / max) * 0.8).toString();
+        }
+      });
+    }
+
+    swiper.on('init', updateFooter);
+    swiper.on('slideChange', updateFooter);
+    if (swiper.init) swiper.init();
+  </script>
+  <!-- Переход-полосы между слайдером и услугами -->
+<div class="transition-divider"></div>
+
+<!-- ================================
+       Секции услуг
+       ================================ -->
+       <main class="bg-[rgba(30,30,30,0.8)]">
+        <!-- 1. Заказ -->
+        <!-- 1. Блок заказа (рефактор под образец) -->
+<section id="order" class="py-32 bg-[#4d4d4d]">
+  <div class="max-w-[1200px] mx-auto grid grid-cols-1 md:grid-cols-2 items-center gap-8 px-6">
+    <!-- Левый столбец: заголовок, подзаголовок, кнопка -->
+    <div>
+      <h2 class="text-5xl md:text-6xl font-black uppercase text-white leading-tight">
+        Закажите товары из Китая<br class="hidden lg:inline"> с 1688.com<br class="hidden lg:inline"> быстро и удобно
+      </h2>
+      <p class="mt-4 text-xl text-gray-300 font-semibold">
+        Сервис мгновенного расчёта стоимости вашего заказа
+      </p>
+      <a href="#" id="open-calc" class="mt-8 inline-block border-2 border-orange-500 bg-black text-white px-8 py-4 rounded-md uppercase text-lg font-semibold transition hover:bg-orange-600">
+        Рассчитать онлайн
+      </a>
+    </div>
+    <!-- Правый столбец: изображение -->
+    <div class="relative flex justify-center pl-8">
+      <img src="7.png" alt="Свежие поставки из Китая" class="rounded-md shadow-xl w-full h-auto max-h-[500px] object-cover" />
+      <!-- Блок "Заказ от 20 000 ₽" в стиле Expected Price -->
+      <div class="absolute top-4 right-4 bg-black bg-opacity-80 border border-orange-500 rounded-md px-4 py-2 text-center">
+        <div class="text-xs uppercase text-orange-500 font-bold">Заказ от</div>
+        <div class="text-xl md:text-2xl font-black text-gray-300">20 000 ₽</div>
+        <div class="text-[10px] text-gray-400 mt-1">без скрытых платежей</div>
+      </div>
+    </div>
+  </div>
+</section>
+    
+        <hr class="border-t border-gray-700"/>
+    
+        <!-- 2. Доставка -->
+        <section id="delivery" class="py-16 px-6 max-w-[1200px] mx-auto scroll-mt-28">
+          <h2 class="text-4xl font-bold uppercase text-white mb-4">Доставка</h2>
+          <p class="text-lg text-gray-300 mb-6">
+            Описание «Доставка»: регионы, тарифы, сроки, гарантии и т.п.
+          </p>
+          <a href="#"
+             class="inline-block border-2 border-orange-500 text-white px-6 py-3 rounded-md uppercase text-base font-semibold transition hover:bg-orange-500">
+            Заказать
+          </a>
+        </section>
+    
+        <hr class="border-t border-gray-700"/>
+    
+        <!-- 3. Сортировка -->
+        <section id="sorting" class="py-16 px-6 max-w-[1200px] mx-auto scroll-mt-28">
+          <h2 class="text-4xl font-bold uppercase text-white mb-4">Сортировка</h2>
+          <p class="text-lg text-gray-300 mb-6">
+            Расскажите про «Сортировку»: как происходит процесс, сроки, контроль качества.
+          </p>
+          <a href="#"
+             class="inline-block border-2 border-orange-500 text-white px-6 py-3 rounded-md uppercase text-base font-semibold transition hover:bg-orange-500">
+            Заказать
+          </a>
+        </section>
+    
+        <hr class="border-t border-gray-700"/>
+    
+          <!-- 4. Консолидация -->
+    <section id="consolidation" class="py-16 px-6 max-w-[1200px] mx-auto scroll-mt-28">
+      <h2 class="text-4xl font-bold uppercase text-white mb-4">Консолидация</h2>
+      <p class="text-lg text-gray-300 mb-6">
+        Детали «Консолидации»: что это, выгоды для бизнеса, примеры кейсов.
+      </p>
+      <!-- «Кнопка» с сообщением -->
+      <span
+         class="inline-block border-2 border-gray-600 text-gray-400 px-6 py-3 rounded-md uppercase text-base font-semibold cursor-not-allowed opacity-70">
+        Нельзя заказать отдельно
+      </span>
+    </section>
+
+    <hr class="border-t border-gray-700"/>
+
+    <!-- 5. Отправка -->
+    <section id="shipping" class="py-16 px-6 max-w-[1200px] mx-auto scroll-mt-28">
+      <h2 class="text-4xl font-bold uppercase text-white mb-4">Отправка</h2>
+      <p class="text-lg text-gray-300 mb-6">
+        Услуга «Отправка»: виды транспорта, страхование, отслеживание груза.
+      </p>
+      <!-- «Кнопка» с сообщением -->
+      <span
+         class="inline-block border-2 border-gray-600 text-gray-400 px-6 py-3 rounded-md uppercase text-base font-semibold cursor-not-allowed opacity-70">
+        Нельзя заказать отдельно
+      </span>
+    </section>
+    
+        <hr class="border-t border-gray-700"/>
+    
+        <!-- 6. Связаться -->
+        <section id="contact" class="py-16 px-6 max-w-[1200px] mx-auto scroll-mt-28">
+          <h2 class="text-4xl font-bold uppercase text-white mb-4">Связаться</h2>
+          <p class="text-lg text-gray-300 mb-6">
+            Форма обратной связи, контактные данные, карта проезда и т.д.
+          </p>
+          <form class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <input type="text" placeholder="Имя" class="p-3 rounded bg-gray-800 text-white w-full"/>
+            <input type="email" placeholder="Email" class="p-3 rounded bg-gray-800 text-white w-full"/>
+            <textarea placeholder="Сообщение" rows="4" class="p-3 rounded bg-gray-800 text-white col-span-full w-full"></textarea>
+          </form>
+          <button
+             class="inline-block border-2 border-orange-500 text-white px-6 py-3 rounded-md uppercase text-base font-semibold transition hover:bg-orange-500">
+            Заказать
+          </button>
+        </section>
+      </main>
+
+  <!-- Footer -->
+  <footer class="bg-[#2a2a2a] text-gray-300">
+  <!-- 1. Ссылки -->
+  <div class="max-w-[1200px] mx-auto px-6 py-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div class="space-y-4">
+      <a href="#contact" class="block hover:text-white">Связаться</a>
+      <a href="#" class="block hover:text-white">Держаться на связи</a>
+      <a href="#" class="block hover:text-white">Работа у нас</a>
+      <a href="#" class="block hover:text-white">О нас</a>
+    </div>
+    <div class="space-y-4">
+      <a href="#news" class="block hover:text-white">Новости и медиа</a>
+      <a href="#community" class="block hover:text-white">Сообщество</a>
+      <a href="#events" class="block hover:text-white">События</a>
+      <a href="#privacy" class="block hover:text-white">Политика конфиденциальности</a>
+    </div>
+    <div class="space-y-4">
+      <a href="#terms" class="block hover:text-white">Условия использования</a>
+      <a href="#fleet" class="block hover:text-white">Флот</a>
+      <div class="flex space-x-4 mt-4">
+        <a href="#" class="hover:text-white">IG</a>
+        <a href="#" class="hover:text-white">TT</a>
+        <a href="#" class="hover:text-white">FB</a>
+        <a href="#" class="hover:text-white">YT</a>
+        <a href="#" class="hover:text-white">LI</a>
+      </div>
+    </div>
+  </div>
+  <!-- 2. Большой логотип -->
+  <div class="py-16 text-center px-[75px]">
+    <span class="block w-full text-[12vw] leading-none font-black uppercase text-[rgba(255,255,255,0.4)]">
+      ROSEFULFILMENT
+    </span>
+  </div>
+  <!-- 3. Нижняя полоса -->
+  <div class="py-4 mt-[-2cm] text-center text-base text-[rgba(255,255,255,0.4)]">
+    &copy; 2022 Rosefulfilment. Все права защищены.
+<!-- тут начинается калькулятор -->
+<!-- Calculator Section Begin -->
+<div id="calc-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-start justify-center z-50 pt-32 hidden">
+  <div class="bg-gray-800 rounded-lg shadow-lg w-11/12 max-w-3xl mx-4 p-6 max-h-[80vh] overflow-y-auto relative">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-2xl font-bold">Калькулятор доставки</h2>
+      <button id="calc-close" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+    </div>
+    <form id="calc-form" class="space-y-4 flex flex-col">
+      <input type="text" id="clientName" placeholder="ФИО Клиента" required class="w-full p-2 bg-gray-700 rounded border border-gray-600" />
+      <input type="number" id="rateYuan" step="0.01" placeholder="Курс Юаня (¥)" required class="w-full p-2 bg-gray-700 rounded border border-gray-600" />
+      <input type="number" id="rateDollar" step="0.01" placeholder="Курс Доллара ($)" required class="w-full p-2 bg-gray-700 rounded border border-gray-600" />
+      <hr class="border-gray-600" />
+      <div id="productsContainer" class="space-y-4">
+        <div class="product-entry bg-gray-700 p-4 rounded border border-gray-600 space-y-3">
+          <h3 class="font-semibold text-lg">Товар №1</h3>
+          <input type="text" placeholder="Название товара" required class="w-full p-2 bg-gray-600 rounded border border-gray-500" />
+          <input type="number" step="0.01" placeholder="Цена (¥)" required class="w-full p-2 bg-gray-600 rounded border border-gray-500" />
+          <input type="number" placeholder="Кол-во" required class="w-full p-2 bg-gray-600 rounded border border-gray-500" />
+          <input type="number" step="0.01" placeholder="Доставка в Китае (¥)" required class="w-full p-2 bg-gray-600 rounded border border-gray-500" />
+          <input type="number" step="0.01" placeholder="Вес (кг)" required class="w-full p-2 bg-gray-600 rounded border border-gray-500" />
+          <input type="number" step="0.01" placeholder="Тариф (USD/кг)" required class="w-full p-2 bg-gray-600 rounded border border-gray-500" />
+          <input type="number" step="0.01" placeholder="Упаковка ($)" required class="w-full p-2 bg-gray-600 rounded border border-gray-500" />
+          <input type="number" placeholder="Грузомест" required class="w-full p-2 bg-gray-600 rounded border border-gray-500" />
+          <button type="button" class="remove-product text-red-500 hover:text-red-400">Удалить товар</button>
+        </div>
+      </div>
+      <button type="button" id="addProduct" class="w-full py-2 bg-orange-500 text-black rounded-md">Добавить товар</button>
+      <button type="button" id="calc-button" class="w-full py-3 bg-black text-white rounded-md uppercase">Рассчитать</button>
+    </form>
+    <div id="calc-result" class="mt-6 bg-gray-700 p-4 rounded overflow-y-auto hidden">
+      <pre id="result-text" class="whitespace-pre-wrap text-gray-200"></pre>
+    </div>
+  </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const openBtns = document.querySelectorAll('#open-calc');
+  const modal = document.getElementById('calc-modal');
+  const closeBtn = document.getElementById('calc-close');
+  const addProductBtn = document.getElementById('addProduct');
+  const calcBtn = document.getElementById('calc-button');
+  const productsContainer = document.getElementById('productsContainer');
+  const resultWrapper = document.getElementById('calc-result');
+  const resultText = document.getElementById('result-text');
+
+  openBtns.forEach(btn => btn.addEventListener('click', e => { e.preventDefault(); modal.classList.remove('hidden'); }));
+  closeBtn.addEventListener('click', e => { e.stopPropagation(); modal.classList.add('hidden'); });
+  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
+
+  function attachRemove(btn, item) {
+    btn.addEventListener('click', () => {
+      if (productsContainer.children.length > 1) item.remove();
+    });
+  }
+  addProductBtn.addEventListener('click', () => {
+    const template = document.querySelector('.product-entry');
+    const clone = template.cloneNode(true);
+    const idx = productsContainer.children.length + 1;
+    clone.querySelector('h3').textContent = `Товар №${idx}`;
+    clone.querySelectorAll('input').forEach(i => i.value = '');
+    attachRemove(clone.querySelector('.remove-product'), clone);
+    productsContainer.append(clone);
+  });
+
+  calcBtn.addEventListener('click', () => {
+    const fields = document.querySelectorAll('#calc-form input[required]');
+    let valid = true;
+    fields.forEach(f => { if (!f.value) { f.classList.add('border-red-500'); valid = false; } else { f.classList.remove('border-red-500'); } });
+    if (!valid) { alert('Пожалуйста, заполните все обязательные поля.'); return; }
+
+    const clientName = document.getElementById('clientName').value.trim();
+    const rateYuan = parseFloat(document.getElementById('rateYuan').value);
+    const rateDollar = parseFloat(document.getElementById('rateDollar').value);
+    const now = new Date();
+    const date = String(now.getDate()).padStart(2,'0') + '.' + String(now.getMonth()+1).padStart(2,'0') + '.' + now.getFullYear();
+    const time = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
+    const timestamp = date + ' ' + time;
+
+    let output = `ФИО Клиента: ${clientName}
+`;
+    output += `Дата расчёта: ${timestamp}
+`;
+    output += `Оншорный курс Юаня: ${rateYuan} ¥
+`;
+    output += `Курс доллара: ${rateDollar} $
+
+`;
+    output += `Примечание: Стоимость доставки в Москву рассчитана по курсу доллара, доступному для международных расчётов (SWIFT или наличный доллар нового образца в Москве). Расчёты выполнены на момент заказа груза.
+
+`;
+
+    let totalOrder = 0;
+    let totalPurchaseYuan = 0;
+    let totalShipRub = 0;
+    document.querySelectorAll('.product-entry').forEach((entry, i) => {
+      const inputs = entry.querySelectorAll('input');
+      const nameVal = inputs[0].value || '-';
+      const unit = parseFloat(inputs[1].value);
+      const qty = parseInt(inputs[2].value);
+      const intDel = parseFloat(inputs[3].value);
+      const wt = parseFloat(inputs[4].value);
+      const rateSvc = parseFloat(inputs[5].value);
+      const pack = parseFloat(inputs[6].value);
+      const units = parseInt(inputs[7].value);
+
+      const purchase = unit * qty + intDel;
+      const commission = purchase * 0.05;
+      const totalYuan = purchase + commission;
+      const rub = totalYuan * rateYuan;
+      const insurance = Math.ceil((rub / rateDollar) * 0.02);
+      const shipUSD = wt * qty * rateSvc + insurance + pack * units;
+      const shipRub = shipUSD * rateDollar;
+      const productCost = rub + shipRub;
+
+      totalOrder += productCost;
+      totalPurchaseYuan += totalYuan;
+      totalShipRub += shipRub;
+
+      output += `Наименование товара: ${nameVal}
+
+`;
+      output += `Параметры заказа:
+  • Стоимость единицы товара: ${unit} ¥
+  • Количество товара: ${qty} ед.
+  • Доставка внутри Китая: ${intDel} ¥
+`;      output += `  • Вес товара: ${wt} кг
+  • Тариф доставки в Москву: ${rateSvc} $
+`;      output += `  • Стоимость упаковки: ${pack} $
+  • Количество грузомест: ${units} шт.
+`;
+      output += `Расчёты:
+  • Выкуп: ${purchase.toFixed(2)} ¥
+  • Комиссия (5%): ${commission.toFixed(2)} ¥
+  • Итог (выкуп + доставка): ${totalYuan.toFixed(2)} ¥ → ${rub.toFixed(2)} руб.
+  • Общий вес: ${(wt*qty).toFixed(2)} кг
+  • Страховка: ${insurance} $
+  • Доставка (Москву): ${shipUSD.toFixed(2)} $ → ${shipRub.toFixed(2)} руб.
+  • Себестоимость за единицу: ${(productCost/qty).toFixed(2)} руб.
+  • Итоговая стоимость: ${productCost.toFixed(2)} руб.
+
+`;
+    });
+
+    output += `Общая стоимость заказа: ${totalOrder.toFixed(2)} руб.
+`;
+    output += `Общая стоимость выкупа товара: ${totalPurchaseYuan.toFixed(2)} ¥ → ${(totalPurchaseYuan*rateYuan).toFixed(2)} руб.
+`;
+    output += `Доставка в Москву: ${totalShipRub.toFixed(2)} руб.`;
+
+    resultText.textContent = output;
+    resultWrapper.classList.remove('hidden');
+    // Прокрутка к результату
+    resultWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Сохранение расчёта в архив
+    (function(){
+      const arch = JSON.parse(localStorage.getItem('calcArchive')||'[]');
+      arch.push({ timestamp, client: clientName, yuan: rateYuan, dollar: rateDollar, output });
+      localStorage.setItem('calcArchive', JSON.stringify(arch));
+    })();
+    // Прокрутка к результату
+    resultWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+</script>
+
+<!-- Archive Modal Begin -->
+<div id="archive-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-start justify-center z-50 pt-32 overflow-y-auto hidden">
+  <div class="bg-gray-800 rounded-lg shadow-lg w-11/12 max-w-4xl mx-4 p-6 max-h-[90vh] overflow-y-auto relative">
+    <button id="archive-close" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
+    <div class="flex">
+      <ul id="archive-list" class="w-1/3 list-decimal list-inside text-gray-200 space-y-2"></ul>
+      <div id="archive-detail" class="w-full bg-gray-700 p-4 rounded whitespace-pre-wrap text-gray-100 overflow-y-auto max-h-[70vh]"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Archive functionality
+(function() {
+  const archiveModal = document.getElementById('archive-modal');
+  const archiveClose = document.getElementById('archive-close');
+  const archiveList  = document.getElementById('archive-list');
+  const archiveDetail= document.getElementById('archive-detail');
+
+  function openArchive() {
+    const arch = JSON.parse(localStorage.getItem('calcArchive')||'[]');
+    archiveList.innerHTML = '';
+    archiveDetail.textContent = '';
+    if (!arch.length) {
+      archiveList.innerHTML = '<li>Архив пуст.</li>';
+    } else {
+      arch.forEach((rec, i) => {
+        const li = document.createElement('li');
+        li.textContent = rec.timestamp + ' | ' + rec.client;
+        li.classList.add('cursor-pointer','hover:text-orange-500');
+        li.addEventListener('click', () => { archiveDetail.textContent = rec.output; });
+        archiveList.append(li);
+      });
+    }
+    archiveModal.classList.remove('hidden');
+  }
+
+  // Close handlers
+  archiveClose.addEventListener('click', e => { e.stopPropagation(); archiveModal.classList.add('hidden'); });
+  archiveModal.addEventListener('click', e => { if (e.target === archiveModal) archiveModal.classList.add('hidden'); });
+
+  // Secret key combination with password protection
+  const ARCHIVE_PASSWORD = 'rose-secret';
+  document.addEventListener('keydown', e => {
+    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase()==='a') {
+      const pwd = prompt('Введите пароль для доступа к архиву:');
+      if (pwd === ARCHIVE_PASSWORD) {
+        openArchive();
+      } else if (pwd !== null) {
+        alert('Неверный пароль.');
+      }
+    }
+  });
+})();
+</script>
+

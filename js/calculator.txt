@@ -1,0 +1,164 @@
+document.addEventListener('DOMContentLoaded', () => {
+  const openBtn      = document.getElementById('open-calc');
+  const calcModal    = document.getElementById('calc-modal');
+  const closeBtn     = document.getElementById('calc-close');
+  const archiveModal = document.getElementById('archive-modal');
+  const archiveClose = document.getElementById('archive-close');
+
+  // делаем openCalc() из HTML-атрибута onclick доступным
+  window.openCalc = () => {
+    calcModal.classList.remove('hidden');
+  };
+
+  // тоже навешиваем на кнопку
+  openBtn.addEventListener('click', e => {
+    e.preventDefault();
+    window.openCalc();
+  });
+
+  // Закрытие калькулятора
+  closeBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    calcModal.classList.add('hidden');
+  });
+  calcModal.addEventListener('click', e => {
+    if (e.target === calcModal) calcModal.classList.add('hidden');
+  });
+
+  // Секретное Ctrl+Shift+A — открыть архив
+  document.addEventListener('keydown', e => {
+    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'a') {
+      openArchiveModal();
+    }
+  });
+
+  // Закрытие архива
+  archiveClose.addEventListener('click', e => {
+    e.stopPropagation();
+    archiveModal.classList.add('hidden');
+  });
+  archiveModal.addEventListener('click', e => {
+    if (e.target === archiveModal) archiveModal.classList.add('hidden');
+  });
+
+  // Функция открытия архива (она же используется по “секретной” комбинации)
+  function openArchiveModal() {
+    const arch     = JSON.parse(localStorage.getItem('calcArchive') || '[]');
+    const listEl   = document.getElementById('archive-list');
+    const detailEl = document.getElementById('archive-detail');
+    listEl.innerHTML     = '';
+    detailEl.textContent = '';
+
+    if (!arch.length) {
+      listEl.innerHTML = '<li>Архив пуст.</li>';
+    } else {
+      arch.forEach(rec => {
+        const li = document.createElement('li');
+        li.textContent = `${rec.timestamp} | ${rec.client} | IP: ${rec.ip}`;
+        li.classList.add('cursor-pointer','hover:text-orange-500');
+        li.addEventListener('click', () => {
+          detailEl.textContent = rec.output;
+        });
+        listEl.append(li);
+      });
+    }
+    archiveModal.classList.remove('hidden');
+  }
+
+  // Добавление/удаление товаров
+  const productsContainer = document.getElementById('productsContainer');
+  document.getElementById('addProduct').addEventListener('click', () => {
+    const template = document.querySelector('.product-entry');
+    const clone    = template.cloneNode(true);
+    const count    = productsContainer.children.length + 1;
+    clone.querySelector('h3').textContent = `Товар №${count}`;
+    clone.querySelectorAll('input').forEach(i => i.value = '');
+    productsContainer.append(clone);
+    clone.querySelector('.remove-product').addEventListener('click', () => {
+      if (productsContainer.children.length > 1) clone.remove();
+    });
+  });
+
+  // Расчёт
+  document.getElementById('calc-button').addEventListener('click', async () => {
+    const name   = document.getElementById('clientName').value.trim() || '-';
+    const yuan   = parseFloat(document.getElementById('rateYuan').value)   || 0;
+    const dollar = parseFloat(document.getElementById('rateDollar').value) || 0;
+    const now    = new Date();
+    const date   = String(now.getDate()).padStart(2,'0') + '.' + String(now.getMonth()+1).padStart(2,'0') + '.' + now.getFullYear();
+    const time   = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
+    const timestamp = date + ' ' + time;
+    let ip = 'неизвестен';
+    try {
+      const res = await fetch('https://api.ipify.org?format=json');
+      ip = (await res.json()).ip;
+    } catch {}
+
+    let text = `ФИО Клиента: ${name}\n`;
+    text += `Дата расчёта: ${timestamp}\n`;
+    text += `Оншорный курс Юаня: ${yuan} ¥\n`;
+    text += `Курс доллара: ${dollar} $\n\n`;
+    text += `Примечание: Стоимость доставки в Москву рассчитана по курсу доллара, доступному для международных расчётов (SWIFT или наличный доллар нового образца в Москве). Расчёты выполнены на момент заказа груза.\n\n`;
+
+    let totalOrder=0, totalPurchaseYuan=0, totalShipRub=0;
+    document.querySelectorAll('.product-entry').forEach(entry => {
+      const inputs = entry.querySelectorAll('input');
+      const [nameEl, priceEl, qtyEl, intDelEl, wtEl, rateEl, packEl, unitsEl] = inputs;
+      const unit     = parseFloat(priceEl.value)   || 0;
+      const qty      = parseInt(qtyEl.value)       || 0;
+      const intDel   = parseFloat(intDelEl.value)  || 0;
+      const wt       = parseFloat(wtEl.value)      || 0;
+      const rate     = parseFloat(rateEl.value)    || 0;
+      const pack     = parseFloat(packEl.value)    || 0;
+      const units    = parseInt(unitsEl.value)     || 0;
+      const purchase = unit*qty + intDel;
+      const commission = purchase*0.05;
+      const totalY    = purchase + commission;
+      const rub       = totalY * yuan;
+      const insurance = Math.ceil((rub/dollar)*0.02);
+      const shipUSD   = wt*qty*rate + insurance + pack*units;
+      const shipRub   = shipUSD * dollar;
+      const productTotal = rub + shipRub;
+      totalOrder       += productTotal;
+      totalPurchaseYuan+= totalY;
+      totalShipRub     += shipRub;
+
+      text += `Наименование товара: ${nameEl.value||'-'}\n\n`;
+      text += `Параметры заказа:\n`;
+      text += `  • Стоимость единицы товара: ${unit} ¥\n`;
+      text += `  • Количество товара: ${qty} ед.\n`;
+      text += `  • Доставка внутри Китая: ${intDel} ¥\n`;
+      text += `  • Вес товара: ${wt} кг\n`;
+      text += `  • Тариф доставки в Москву: ${rate} $\n`;
+      text += `  • Стоимость упаковки: ${pack} $\n`;
+      text += `  • Количество грузомест: ${units} шт.\n`;
+      text += `Расчёты:\n`;
+      text += `  • Выкуп: ${purchase.toFixed(2)} ¥\n`;
+      text += `  • Комиссия (5%): ${commission.toFixed(2)} ¥\n`;
+      text += `  • Итог (выкуп + доставка): ${totalY.toFixed(2)} ¥ → ${rub.toFixed(2)} руб.\n`;
+      text += `  • Страховка: ${insurance} $\n`;
+      text += `  • Доставка (USD): ${shipUSD.toFixed(2)} $\n`;
+      text += `  • Доставка (RUB): ${shipRub.toFixed(2)} руб.\n`;
+      text += `  • Итоговая стоимость: ${productTotal.toFixed(2)} руб.\n\n`;
+    });
+
+    text += `Общая стоимость заказа: ${totalOrder.toFixed(2)} руб.\n`;
+    text += `Общая стоимость выкупа товара: ${totalPurchaseYuan.toFixed(2)} ¥ → ${(totalPurchaseYuan*yuan).toFixed(2)} руб.\n`;
+    text += `Доставка в Москву: ${totalShipRub.toFixed(2)} руб.`;
+
+    const archive = JSON.parse(localStorage.getItem('calcArchive')||'[]');
+    archive.push({timestamp, ip, client: name, yuan, dollar, output: text});
+    localStorage.setItem('calcArchive', JSON.stringify(archive));
+    localStorage.setItem('lastRateYuan', yuan);
+    localStorage.setItem('lastRateDollar', dollar);
+
+    document.getElementById('result-text').textContent = text;
+    document.getElementById('calc-result').classList.remove('hidden');
+  });
+
+  // Подстановка последних курсов в placeholder
+  const lastY = localStorage.getItem('lastRateYuan');
+  if (lastY) document.getElementById('rateYuan').placeholder = lastY;
+  const lastD = localStorage.getItem('lastRateDollar');
+  if (lastD) document.getElementById('rateDollar').placeholder = lastD;
+});

@@ -216,16 +216,6 @@
         transform: scale(0.5);
         transform-origin: top left;
       }
-      /* Exclude JivoChat from mobile scaling */
-      #jivo-iframe-container {
-        transform: scale(2) !important;
-        transform-origin: top left !important;
-        position: fixed !important;
-        bottom: 16px !important;
-        right: 16px !important;
-        width: auto !important;
-        height: auto !important;
-      }
       .slide-img {
         top: 40% !important;
       }
@@ -695,7 +685,7 @@
 <!-- тут начинается калькулятор -->
 <!-- Calculator Section Begin -->
 <div id="calc-modal" class="fixed inset-0 bg-black bg-opacity-60 overflow-y-auto md:overflow-y-hidden flex items-start justify-center z-[200] pt-4 md:pt-16 hidden">
-  <div class="bg-gray-800 rounded-lg shadow-lg w-11/12 max-w-3xl mx-4 p-6 overflow-y-auto md:max-h-[calc(100vh-12rem)] relative">
+<div class="bg-gray-800 rounded-lg shadow-lg w-11/12 max-w-3xl mx-4 p-6 overflow-y-auto md:max-h-[calc(100vh-12rem)] relative">
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-2xl font-bold text-center w-full text-orange-500">Калькулятор доставки</h2>
       <button id="calc-close" class="text-gray-400 hover:text-white text-2xl">&times;</button>
@@ -721,7 +711,6 @@
       </div>
       <button type="button" id="addProduct" class="w-full py-2 bg-orange-500 text-black rounded-md focus:outline-none">Добавить товар</button>
       <button type="button" id="calc-button" class="w-full py-3 bg-black text-white rounded-md uppercase focus:outline-none">Рассчитать</button>
-      <button type="button" id="archive-button" class="w-full py-2 bg-gray-700 text-orange-400 rounded-md mt-2 focus:outline-none hover:bg-gray-600">Архив расчетов</button>
     </form>
     <div id="calc-result" class="mt-6 bg-gray-700 p-4 rounded overflow-y-auto hidden">
       <pre id="result-text" class="whitespace-pre-wrap text-gray-200"></pre>
@@ -860,28 +849,8 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.setItem('calcArchive', JSON.stringify(arch));
     })();
   });
-
-  // Archive button handler
-  const archiveBtn = document.getElementById('archive-button');
-  if (archiveBtn) {
-    archiveBtn.addEventListener('click', () => {
-      // Use same password protection as Ctrl+Shift+A
-      const ARCHIVE_PASSWORD = 'rose-secret';
-      const pwd = prompt('Введите пароль для доступа к архиву:');
-      if (pwd === ARCHIVE_PASSWORD) {
-        // Open archive modal
-        if (typeof window.openArchive === "function") window.openArchive();
-        else {
-          // Fallback: dispatch event to open archive
-          const evt = new CustomEvent('openArchiveModal');
-          document.dispatchEvent(evt);
-        }
-      } else if (pwd !== null) {
-        alert('Неверный пароль.');
-      }
-    });
-  }
 });
+</script>
 
 <!-- Archive Modal Begin -->
 <div id="archive-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-start justify-center z-50 pt-32 overflow-y-auto hidden">
@@ -896,7 +865,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <script>
 // Archive functionality
-// Expose openArchive globally for archive button
 (function() {
   const archiveModal = document.getElementById('archive-modal');
   const archiveClose = document.getElementById('archive-close');
@@ -921,15 +889,13 @@ document.addEventListener('DOMContentLoaded', () => {
     archiveModal.classList.remove('hidden');
   }
 
-  // Expose to global for button
-  window.openArchive = openArchive;
   // Close handlers
-  archiveClose.addEventListener('click', function(e) { e.stopPropagation(); archiveModal.classList.add('hidden'); });
-  archiveModal.addEventListener('click', function(e) { if (e.target === archiveModal) archiveModal.classList.add('hidden'); });
+  archiveClose.addEventListener('click', e => { e.stopPropagation(); archiveModal.classList.add('hidden'); });
+  archiveModal.addEventListener('click', e => { if (e.target === archiveModal) archiveModal.classList.add('hidden'); });
 
   // Secret key combination with password protection
   const ARCHIVE_PASSWORD = 'rose-secret';
-  document.addEventListener('keydown', function(e) {
+  document.addEventListener('keydown', e => {
     if (e.ctrlKey && e.shiftKey && e.key.toLowerCase()==='a') {
       const pwd = prompt('Введите пароль для доступа к архиву:');
       if (pwd === ARCHIVE_PASSWORD) {
@@ -941,6 +907,4 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 })();
 </script>
-<!-- JivoChat Widget -->
-<script src="https://code.jivosite.com/widget/sU0U6kuPbC" async></script>
 
